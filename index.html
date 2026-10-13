@@ -1,0 +1,798 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Сетка закрепов</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=Unbounded:wght@500;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a dispatch board — dates down the left, six homepage slots across; a side panel opens per slot. */
+:root{
+  --paper:#EDEFF2; --surface:#FFFFFF; --surface-2:#F6F7F9; --ink:#14171B; --muted:#646B76; --line:#D5D9DF; --line-strong:#B9BFC8;
+  --marker:#FFD43B; --marker-ink:#14171B; --marker-soft:#FFF4C2;
+  --req:#2E64E0; --req-soft:#E5EDFF; --warn:#C9381F; --warn-soft:#FDE7E2; --ok:#17864B; --ok-soft:#DFF3E7;
+  --hatch:rgba(20,23,27,.07); --chip-s:62%; --chip-l:90%; --chip-ink:#1B1E22;
+  --shadow:0 18px 50px -20px rgba(20,23,27,.35);
+  --f-display:"Unbounded","Onest",system-ui,sans-serif;
+  --f-body:"Graphik LC","Graphik LCG","Graphik","Onest",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"Graphik LC","Graphik LCG","Graphik","JetBrains Mono",ui-monospace,"SF Mono",Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#111316; --surface:#191C20; --surface-2:#1F2328; --ink:#ECEEF1; --muted:#99A0AA; --line:#2B3036; --line-strong:#424952;
+  --marker:#F2C524; --marker-ink:#14171B; --marker-soft:#3A3217;
+  --req:#7AA2FF; --req-soft:#1D2944; --warn:#FF7A63; --warn-soft:#3D1F1A; --ok:#45C982; --ok-soft:#173326;
+  --hatch:rgba(236,238,241,.06); --chip-s:28%; --chip-l:24%; --chip-ink:#ECEEF1;
+  --shadow:0 18px 50px -20px rgba(0,0,0,.8); color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --paper:#111316; --surface:#191C20; --surface-2:#1F2328; --ink:#ECEEF1; --muted:#99A0AA; --line:#2B3036; --line-strong:#424952;
+  --marker:#F2C524; --marker-ink:#14171B; --marker-soft:#3A3217;
+  --req:#7AA2FF; --req-soft:#1D2944; --warn:#FF7A63; --warn-soft:#3D1F1A; --ok:#45C982; --ok-soft:#173326;
+  --hatch:rgba(236,238,241,.06); --chip-s:28%; --chip-l:24%; --chip-ink:#ECEEF1;
+  --shadow:0 18px 50px -20px rgba(0,0,0,.8); color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{background:var(--paper);color:var(--ink);font:14px/1.45 var(--f-body);-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}
+a{color:inherit}
+.wrap{padding-inline:20px;padding-block:18px 40px;max-width:1500px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+
+/* header */
+.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px 20px}
+.brand h1{font:700 26px/1.05 var(--f-display);letter-spacing:-.01em;margin:0;text-wrap:balance}
+.brand h1 mark{background:linear-gradient(transparent var(--mark-from),var(--marker) var(--mark-from));color:inherit;padding:0 2px}
+:root{--mark-from:55%}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--mark-from:78%}}
+:root[data-theme="dark"]{--mark-from:78%}
+.brand p{margin:6px 0 0;color:var(--muted);font-size:13px}
+.brand p b{font-family:var(--f-mono);font-weight:500;color:var(--ink)}
+.who{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+@media (max-width:720px){.top>.who{justify-content:flex-start}}
+#themeBtn{width:38px;height:38px;padding:0;font-size:16px;border-radius:10px}
+.role{display:inline-flex;align-items:center;height:38px;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:0 12px;border-radius:10px;border:1px solid var(--line-strong);color:var(--muted)}
+.role.mod{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.who img{width:30px;height:30px;border-radius:50%}
+
+/* toolbar */
+.bar{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center}
+.seg{display:inline-flex;flex-wrap:wrap;max-width:100%;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:3px}
+.seg button{border:0;background:none;padding:6px 12px;border-radius:7px;cursor:pointer;font-weight:500;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.ctl{display:inline-flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:0 10px;height:38px}
+.ctl select{border:0;background:none;height:36px;max-width:230px;cursor:pointer}
+.ctl label{display:flex;align-items:center;gap:6px;cursor:pointer;white-space:nowrap}
+.spacer{flex:1}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:38px;padding:0 14px;border-radius:10px;border:1px solid var(--line-strong);background:var(--surface);cursor:pointer;font-weight:600;white-space:nowrap}
+.btn:hover{border-color:var(--ink)}
+.btn.primary{background:var(--marker);border-color:var(--marker);color:var(--marker-ink)}
+.btn.primary:hover{filter:brightness(.96)}
+.btn.dark{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.btn.ghost{border-color:transparent;background:none}
+.btn.small{height:30px;padding:0 10px;font-size:13px;border-radius:8px}
+.btn.danger{color:var(--warn)}
+.btn:disabled{opacity:.5;cursor:default}
+.count{min-width:22px;height:22px;padding:0 6px;border-radius:99px;background:var(--req);color:#fff;font-size:12px;display:inline-grid;place-items:center;font-variant-numeric:tabular-nums}
+.count.zero{background:var(--line-strong)}
+:focus-visible{outline:2px solid var(--marker);outline-offset:2px}
+.ctl select,.ctl input{outline:none}
+.ctl{transition:border-color .12s,box-shadow .12s}
+.ctl:focus-within{border-color:var(--marker);box-shadow:0 0 0 3px color-mix(in srgb,var(--marker) 35%,transparent)}
+
+/* summary + legend */
+.strip{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 28px}
+.stats{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.stats .q{font-size:11px;font-weight:600;line-height:1;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-right:6px}
+.stat{display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 12px;border-radius:10px;background:var(--surface);border:1px solid var(--line);line-height:1}
+.stat b{font-size:16px;font-weight:600;line-height:1;font-variant-numeric:tabular-nums lining-nums}
+.stat span{font-size:13px;line-height:1;color:var(--muted)}
+.stat.hot{border-color:var(--warn);background:var(--warn-soft)}
+.stat.hot b,.stat.hot span{color:var(--warn)}
+.legend{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;font-size:13px;line-height:1;color:var(--muted)}
+.legend .sep{width:1px;height:14px;background:var(--line-strong)}
+.lg{display:inline-flex;align-items:center;gap:7px;height:20px;white-space:nowrap}
+.lg .sw{flex:none;width:20px;height:14px;box-sizing:border-box}
+.lg .pin{flex:none;width:20px;height:14px;margin:0;align-self:center;justify-content:center}
+.sw{width:22px;height:14px;border-radius:4px;border:1px solid var(--line-strong);display:inline-block}
+.sw.free{border-style:dashed;background:var(--surface)}
+.sw.req{background:var(--req-soft);border-color:var(--req)}
+.sw.held{background:repeating-linear-gradient(-45deg,var(--hatch) 0 3px,transparent 3px 7px),var(--surface)}
+.sw.set{background:var(--surface)}
+.sw.fixed{border:2px solid var(--ink)}
+.sw.warn{background:var(--warn-soft);border-color:var(--warn)}
+
+.banner{padding:12px 14px;border-radius:10px;background:var(--surface);border:1px solid var(--line);font-size:13px}
+.banner.warn{background:var(--warn-soft);border-color:var(--warn)}
+
+/* board */
+.board{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:auto;max-height:calc(100vh - 210px);min-height:420px}
+table{border-collapse:separate;border-spacing:0;width:100%;min-width:1180px}
+thead th{position:sticky;z-index:3;background:var(--surface);text-align:left;font-weight:600}
+thead tr.g th{font-family:"Onest",system-ui,-apple-system,"Segoe UI",sans-serif;top:0;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:12px 10px 4px;border-bottom:0}
+thead tr.g th span{display:block;border-top:2px solid var(--ink);padding-top:6px}
+thead tr.c th{top:34px;padding:4px 10px 10px;border-bottom:1px solid var(--line-strong);font-size:13px}
+thead th.dcol{left:0;z-index:4}
+th.dcol,td.dcol{position:sticky;left:0;background:var(--surface);z-index:2;width:118px;min-width:118px;border-right:1px solid var(--line)}
+table{table-layout:fixed}
+tbody td{padding:5px;border-bottom:1px solid var(--line);vertical-align:top;height:1px}
+tbody td>.cell{height:100%}
+tbody td.dcol>.date{height:100%}
+tr.month td{background:var(--surface-2);padding:14px 12px 8px;font:700 13px/1 var(--f-display);letter-spacing:.02em;border-bottom:1px solid var(--line)}
+tr.month td span{position:sticky;left:12px}
+.date{padding:6px 6px 6px 8px;display:flex;flex-direction:column;gap:2px}
+.date .d{font:500 15px/1.1 var(--f-mono);font-variant-numeric:tabular-nums}
+.date .w{font-size:12px;color:var(--muted)}
+.date .tag{margin-top:4px;align-self:flex-start;font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:2px 6px;border-radius:5px;background:var(--marker);color:var(--marker-ink)}
+.date .tag.onair{display:inline-flex;align-items:center;gap:6px;background:var(--ink);color:var(--paper);font:700 11px/1 var(--f-mono);letter-spacing:.14em;padding:5px 8px 5px 7px}
+.date .tag.onair i{width:8px;height:8px;border-radius:50%;background:#FF3B30;box-shadow:0 0 0 0 rgba(255,59,48,.6);animation:onair 1.4s ease-in-out infinite}
+@keyframes onair{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(255,59,48,.55)}50%{opacity:.35;box-shadow:0 0 0 4px rgba(255,59,48,0)}}
+.date .tag.next{background:none;border:1px solid var(--line-strong);color:var(--muted);font:700 11px/1 var(--f-mono);letter-spacing:.14em;padding:4px 8px}
+thead tr.g th.dcol span{border-top-color:transparent}
+tr.live td{background:var(--marker-soft)}
+tr.live td.dcol{background:var(--marker-soft)}
+tr.past{opacity:.55}
+
+.cell{all:unset;box-sizing:border-box;display:flex;flex-direction:column;gap:5px;width:100%;min-height:62px;padding:8px 9px;border-radius:9px;border:1px solid var(--line);background:var(--surface);cursor:pointer;position:relative;transition:border-color .12s,transform .12s}
+.cell:hover{border-color:var(--ink)}
+.cell:focus-visible{outline:none;border-color:var(--marker);box-shadow:0 0 0 3px color-mix(in srgb,var(--marker) 35%,transparent)}
+.cell.free{border-style:dashed;border-color:var(--line-strong);background:transparent}
+.cell.free .lbl{color:var(--muted);font-size:13px}
+.cell.free:hover .lbl{color:var(--ink)}
+.cell.held{background:repeating-linear-gradient(-45deg,var(--hatch) 0 3px,transparent 3px 8px),var(--surface)}
+.cell.fixed{border:2px solid var(--ink);padding:7px 8px}
+.cell.hasreq{border-color:var(--req);background:var(--req-soft)}
+.cell.warn{border-color:var(--warn);box-shadow:inset 0 0 0 1px var(--warn)}
+.cell.dim{opacity:.28}
+.pin{display:inline-flex;align-items:center;color:var(--ok);margin-top:auto;align-self:flex-start;line-height:0}
+.pin svg{display:block}
+.slug{font:12px/1.35 var(--f-mono);overflow-wrap:anywhere;color:var(--ink)}
+.cell .meta{display:flex;flex-wrap:wrap;gap:4px;align-items:center;font-size:11.5px;color:var(--muted)}
+.flag{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:1px 6px;border-radius:5px}
+.flag.req{background:var(--req);color:#fff}
+.flag.warn{background:var(--warn);color:#fff}
+.flag.ok{background:var(--ok-soft);color:var(--ok)}
+.flag.fix{background:var(--ink);color:var(--paper)}
+.flag.imp{background:var(--marker);color:var(--marker-ink)}
+.chip{display:inline-flex;align-items:center;max-width:100%;font-size:12px;font-weight:500;padding:2px 7px;border-radius:6px;background:hsl(var(--h) var(--chip-s) var(--chip-l));color:var(--chip-ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;align-self:flex-start}
+.chip.none{background:var(--surface-2);color:var(--muted)}
+.note{font-size:12px;color:var(--muted);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+
+.skel td{height:72px}
+.empty{padding:40px 20px;text-align:center;color:var(--muted)}
+
+/* side panel */
+.scrim{position:fixed;inset:0;background:rgba(10,12,14,.35);z-index:20;opacity:0;pointer-events:none;transition:opacity .18s}
+.scrim.on{opacity:1;pointer-events:auto}
+.panel{position:fixed;top:0;right:0;bottom:0;width:min(480px,100%);background:var(--surface);z-index:21;box-shadow:var(--shadow);transform:translateX(102%);transition:transform .22s ease;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+.panel.on{transform:none}
+.ph{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:18px 20px 14px;border-bottom:1px solid var(--line)}
+.ph .k{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.ph h2{margin:4px 0 0;font:700 19px/1.2 var(--f-display);text-wrap:balance}
+.pb{overflow:auto;padding:16px 20px 28px;display:flex;flex-direction:column;gap:18px;min-height:0;flex:1}
+.x{all:unset;cursor:pointer;width:34px;height:34px;display:grid;place-items:center;border-radius:8px;font-size:20px;line-height:1;color:var(--muted)}
+.x:hover{background:var(--surface-2);color:var(--ink)}
+.sec h3{margin:0 0 8px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.now{border:1px solid var(--line);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.now.held{background:repeating-linear-gradient(-45deg,var(--hatch) 0 3px,transparent 3px 8px)}
+.now.fixed{border:2px solid var(--ink)}
+.now a.url{font:13px/1.4 var(--f-mono);word-break:break-all}
+.now .row{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.muted{color:var(--muted)}
+.small{font-size:12px}
+.hist{display:flex;flex-direction:column;gap:8px;border-left:2px solid var(--line);padding-left:12px}
+.hist div{font-size:13px;white-space:pre-wrap;word-break:break-word}
+.hist div span{display:block;font-size:11.5px;color:var(--muted)}
+.rq{border:1px solid var(--line);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.rq.new{border-color:var(--req);background:var(--req-soft)}
+.rq .hd{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted);flex-wrap:wrap}
+.rq .hd img{width:20px;height:20px;border-radius:50%}
+.rq .hd b{color:var(--ink);font-weight:600}
+.rq .txt{white-space:pre-wrap;word-break:break-word;font-size:13.5px}
+.rq .acts{display:flex;flex-wrap:wrap;gap:6px}
+.st{font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:2px 7px;border-radius:5px;background:var(--surface-2);color:var(--muted)}
+.st.new{background:var(--req);color:#fff}
+.st.accepted{background:var(--ok-soft);color:var(--ok)}
+.st.rejected{background:var(--warn-soft);color:var(--warn)}
+.form{display:flex;flex-direction:column;gap:10px}
+.f{display:flex;flex-direction:column;gap:5px}
+.f>span{font-size:12.5px;font-weight:600}
+.f input[type=text],.f select,.f textarea{width:100%;border:1px solid var(--line-strong);background:var(--surface);border-radius:9px;padding:9px 11px;min-height:40px}
+.f textarea{min-height:70px;resize:vertical}
+.f input,.f select,.f textarea,.inl input{transition:border-color .12s,box-shadow .12s}
+.f input:focus,.f select:focus,.f textarea:focus,.inl input:focus{outline:none;border-color:var(--marker);box-shadow:0 0 0 3px color-mix(in srgb,var(--marker) 35%,transparent)}
+.chk{display:flex;gap:8px;align-items:flex-start;font-size:13.5px;cursor:pointer}
+.chk input{margin-top:3px}
+.hint{font-size:12px;color:var(--muted)}
+.limit{font-size:13px;line-height:1.45;padding:10px 12px;border-radius:9px;background:var(--warn-soft);color:var(--warn);border:1px solid color-mix(in srgb,var(--warn) 40%,transparent)}
+.form .acts{display:flex;gap:8px;flex-wrap:wrap}
+.inl{display:flex;gap:6px}
+.inl input{flex:1;min-width:0;border:1px solid var(--line-strong);background:var(--surface);border-radius:8px;padding:5px 9px;height:30px;font-size:13px}
+.ib{display:flex;flex-direction:column;gap:10px}
+.ib .when{font:500 12.5px var(--f-mono);color:var(--ink)}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin:-4px 0 4px}
+.tabs button{all:unset;cursor:pointer;padding:8px 10px;font-weight:600;font-size:13px;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px}
+.tabs button[aria-selected="true"]{color:var(--ink);border-color:var(--ink)}
+.rules{font-size:14px;line-height:1.55;max-width:62ch}
+.rules ul{padding-left:18px;margin:6px 0}
+.rules li{margin:4px 0}
+.rules p{margin:0 0 10px}
+
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translate(-50%,30px);background:var(--ink);color:var(--paper);padding:10px 16px;border-radius:10px;font-weight:500;opacity:0;transition:.2s;z-index:40;pointer-events:none;max-width:calc(100% - 32px)}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+
+@media (max-width:720px){
+  .wrap{padding-inline:16px}
+  .brand h1{font-size:21px}
+  .board{max-height:none}
+  .spacer{display:none}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+<style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}code{font-family:var(--f-mono);font-size:.95em}</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <h1>Сетка закрепов <mark>на&nbsp;главной&nbsp;Т—Ж</mark></h1>
+    </div>
+    <div class="who">
+      <button class="btn small" id="themeBtn" data-act="theme" aria-label="Переключить тему">☾ Темная</button>
+      <div class="who" id="who"><span class="role">Подключаюсь…</span></div>
+      <button class="btn dark" id="inboxBtn" data-act="inbox">Заявки <span class="count zero" id="inboxCount">0</span></button>
+    </div>
+  </header>
+
+  <div class="bar">
+    <div class="seg" id="quarters" role="group" aria-label="Квартал"></div>
+    <div class="ctl"><select id="fRubric" aria-label="Редакция"><option value="">Все редакции</option></select></div>
+    <div class="ctl"><label><input type="checkbox" id="fFree"> Только свободные</label></div>
+    <div class="ctl"><label><input type="checkbox" id="fPast"> Прошедшие даты</label></div>
+    <div class="spacer"></div>
+    <button class="btn" data-act="rules">Правила</button>
+  </div>
+
+  <div class="strip">
+    <div class="stats" id="stats"></div>
+    <div class="legend" aria-label="Обозначения">
+      <span class="lg"><i class="sw free"></i>Свободно</span>
+      <span class="lg"><i class="sw req"></i>Заявка</span>
+      <span class="lg"><i class="sw held"></i>Ждем ссылку</span>
+      <span class="lg"><i class="sw set"></i>Материал</span>
+      <span class="lg"><i class="pin"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M3.2 8.6l3 3L12.8 4.6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></i>В конфиге</span>
+      <i class="sep" aria-hidden="true"></i>
+      <span class="lg"><i class="sw fixed"></i>Фикс</span>
+      <span class="lg"><i class="sw warn"></i>Горит: нет ссылки</span>
+    </div>
+  </div>
+
+  <div id="banner"></div>
+
+  <div class="board" id="board" tabindex="-1">
+    <table>
+      <colgroup><col style="width:118px"><col><col><col><col><col><col></colgroup>
+      <thead>
+        <tr class="g">
+          <th class="dcol"><span>&nbsp;</span></th>
+          <th><span>Спецпроекты</span></th>
+          <th colspan="2"><span>Суперзакрепы · flow-cards-feed</span></th>
+          <th colspan="3"><span>Слоты · two-cards-feed</span></th>
+        </tr>
+        <tr class="c" id="colHead"></tr>
+      </thead>
+      <tbody id="rows">
+        <tr><td colspan="7"><div class="empty">Загружаю сетку…</div></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="scrim" id="scrim" data-act="close"></div>
+<aside class="panel" id="panel" aria-hidden="true" role="dialog" aria-labelledby="pTitle">
+  <div class="ph">
+    <div><div class="k" id="pKicker"></div><h2 id="pTitle"></h2></div>
+    <button class="x" data-act="close" aria-label="Закрыть">×</button>
+  </div>
+  <div class="pb">
+    <div id="pInfo" style="display:flex;flex-direction:column;gap:18px"></div>
+    <div id="pForm"></div>
+  </div>
+</aside>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+(function(){
+// ВСТАВЬ СЮДА адрес веб-приложения Apps Script (заканчивается на /exec)
+const API_URL="https://script.google.com/macros/s/AKfycbyfMsZKK-zjSKusZTTyuqmrCRpX_4zPFXbI1B00F2Zv1fZ6Ea05URQx_P5CJLHiqYeV/exec";
+
+const RUBRICS=["🚗 Авто","👾 Безопасность","🗃️ Бизнес","🏙️ Город","🤰 Дети","✏️ Дневники трат","🍝 Едакция","🦥 Животные","💸 Инвестиции и Экономика","🗿 Интернет","🤝 Кто помогает","💊 Медицина","🧠 Мозг","🏠 Недвижимость","🎓 Образование","😎 Поп-культура","👩‍⚖️ Право","⚽ Спорт","📊 Статистика","⚙️ Техно","✈️ Чемодан","💬 UGC","🎬 Видео","📚 Гайды","👥 Интервью","🤖 Игры","🗣️ Новости","🎙 Подкасты","📝 Списки и инструкции","👀 Что делать","🩳 Шорты","💉 Аптечка","⚖️ Сравнятор","📒 Учебник","📦 Эмиграция","💬 UGC × Авто","💬 UGC × Безопасность","💬 UGC × Бизнес","💬 UGC × Город","💬 UGC × Дети","💬 UGC × Дневники трат","💬 UGC × Едакция","💬 UGC × Животные","💬 UGC × Инвестиции и Экономика","💬 UGC × Интернет","💬 UGC × Кто помогает","💬 UGC × Медицина","💬 UGC × Мозг","💬 UGC × Недвижимость","💬 UGC × Образование","💬 UGC × Поп-культура","💬 UGC × Право","💬 UGC × Спорт","💬 UGC × Статистика","💬 UGC × Техно","💬 UGC × Чемодан","💬 UGC × Видео","💬 UGC × Гайды","💬 UGC × Интервью","💬 UGC × Интерактивы","💬 UGC × Новости","💬 UGC × Подкасты","💬 UGC × Списки и инструкции","💬 UGC × Что делать","💬 UGC × Шорты","💬 UGC × Аптечка","💬 UGC × Сравнятор","💬 UGC × Учебник","💬 UGC × Эмиграция"];
+const COLS=[
+  {id:"ama",name:"АМА + большие запуски"},
+  {id:"s1",name:"Суперзакреп № 1"},
+  {id:"s2",name:"Суперзакреп № 2"},
+  {id:"c1",name:"Слот № 1"},
+  {id:"c2",name:"Слот № 2"},
+  {id:"c3",name:"Слот № 3"}];
+const COLNAME=Object.fromEntries(COLS.map(c=>[c.id,c.name]));
+const MONTHS=["январь","февраль","март","апрель","май","июнь","июль","август","сентябрь","октябрь","ноябрь","декабрь"];
+const MONTHS_G=["января","февраля","марта","апреля","мая","июня","июля","августа","сентября","октября","ноября","декабря"];
+const MONTHS_P=["январе","феврале","марте","апреле","мае","июне","июле","августе","сентябре","октябре","ноябре","декабре"];
+const WD={1:"понедельник",3:"среда",5:"пятница"};
+const CHECK='<svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M3.2 8.6l3 3L12.8 4.6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const LINK_DAYS=2;      // за сколько дней до ротации подсвечивать слот без ссылки
+const MONTH_LIMIT=10;   // не больше слотов на одну редакцию в месяц
+const POLL_MS=20000;    // как часто подтягивать свежие данные
+
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const pad=n=>String(n).padStart(2,"0");
+const iso=d=>d.getUTCFullYear()+"-"+pad(d.getUTCMonth()+1)+"-"+pad(d.getUTCDate());
+const parse=s=>{const [y,m,d]=s.split("-").map(Number);return new Date(Date.UTC(y,m-1,d))};
+const now=new Date();
+const TODAY=now.getFullYear()+"-"+pad(now.getMonth()+1)+"-"+pad(now.getDate());
+const dayDiff=(a,b)=>Math.round((parse(a)-parse(b))/864e5);
+const human=s=>{const d=parse(s);return d.getUTCDate()+" "+MONTHS_G[d.getUTCMonth()]};
+const wday=s=>WD[parse(s).getUTCDay()]||"";
+const hue=s=>{const b=String(s||"").replace(/^.*×\s*/,"").replace(/^\S+\s+/,"");let h=0;for(const c of b)h=(h*31+c.codePointAt(0))%360;return h};
+const chip=r=>r?`<span class="chip" style="--h:${hue(r)}">${esc(r)}</span>`:"";
+const isUrl=u=>/^https?:\/\//i.test(u||"");
+const slugOf=u=>{if(!u)return"";if(!isUrl(u))return u.trim();try{const p=new URL(u).pathname.replace(/^\/|\/$/g,"");return p||u}catch(e){return u}};
+const cellId=(date,col)=>date+"_"+col;
+const slugHTML=u=>esc(slugOf(u)).replace(/([\/\-_])/g,"$1<wbr>");
+const fmtTime=t=>{if(!t)return"";const d=new Date(t);if(isNaN(d))return String(t).slice(0,10);return d.toLocaleDateString("ru-RU",{day:"numeric",month:"short"})+", "+d.toLocaleTimeString("ru-RU",{hour:"2-digit",minute:"2-digit"})};
+function plural(n,a,b,c){const m=n%10,h=n%100;return m===1&&h!==11?a:m>=2&&m<=4&&(h<12||h>14)?b:c}
+
+function rotationDates(from,to){const out=[];for(let d=parse(from);d<=parse(to);d=new Date(d.getTime()+864e5)){if(WD[d.getUTCDay()])out.push(iso(d))}return out}
+function quarterOf(s){const d=parse(s);return {y:d.getUTCFullYear(),q:Math.floor(d.getUTCMonth()/3)+1}}
+function qRange(y,q){const m=(q-1)*3;return [iso(new Date(Date.UTC(y,m,1))),iso(new Date(Date.UTC(y,m+3,0)))]}
+function qKey(o){return o.y+"-Q"+o.q}
+function nextQ(o){return o.q===4?{y:o.y+1,q:1}:{y:o.y,q:o.q+1}}
+
+// ---------- local storage helpers ----------
+const ls={
+  get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},
+  set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}},
+  del(k){try{localStorage.removeItem(k)}catch(e){}}
+};
+
+// ---------- state ----------
+const S={
+  grid:new Map(), reqs:new Map(), ready:false, ok:null, sig:"",
+  isMod:false, pass:null, tokens:ls.get("zk-tokens",{}), name:ls.get("zk-name",""),
+  q:quarterOf(TODAY), rubric:"", onlyFree:false, showPast:false,
+  open:null, inboxTab:"new",
+};
+{const v=ls.get("zk-prefs",{});if(v.rubric)S.rubric=v.rubric;if(v.onlyFree)S.onlyFree=true}
+function savePrefs(){ls.set("zk-prefs",{rubric:S.rubric,onlyFree:S.onlyFree})}
+
+const LIVE=(()=>{let d=parse(TODAY);for(let i=0;i<7;i++){if(WD[d.getUTCDay()])return iso(d);d=new Date(d.getTime()-864e5)}return TODAY})();
+const NEXT=(()=>{let d=new Date(parse(TODAY).getTime()+864e5);for(let i=0;i<7;i++){if(WD[d.getUTCDay()])return iso(d);d=new Date(d.getTime()+864e5)}})();
+
+const isMine=r=>!!S.tokens[r._id];
+function reqsFor(id){return [...S.reqs.values()].filter(r=>cellId(r.date,r.col)===id).sort((a,b)=>String(a.createdAt).localeCompare(String(b.createdAt)))}
+function pendingFor(id){return reqsFor(id).filter(r=>r.status==="new")}
+function rubricLoad(rubric,date){
+  if(!rubric)return {slots:0,pending:0,total:0};
+  const m=date.slice(0,7);
+  const slots=[...S.grid.values()].filter(g=>g.rubric===rubric&&String(g.date).slice(0,7)===m).length;
+  const pending=[...S.reqs.values()].filter(r=>r.status==="new"&&r.rubric===rubric&&String(r.date).slice(0,7)===m).length;
+  return {slots,pending,total:slots+pending};
+}
+function monthP(date){return MONTHS_P[parse(date).getUTCMonth()]}
+function limitMsg(rubric,date){
+  const L=rubricLoad(rubric,date);
+  if(L.total<MONTH_LIMIT)return "";
+  const parts=[`${L.slots} ${plural(L.slots,"слот","слота","слотов")} в сетке`];
+  if(L.pending)parts.push(`${L.pending} ${plural(L.pending,"заявка","заявки","заявок")} на рассмотрении`);
+  return `У редакции «${rubric}» уже ${parts.join(" и ")} в ${monthP(date)}. Больше ${MONTH_LIMIT} слотов в месяц на одну редакцию занять нельзя. Выбери другой месяц или напиши @oefeva.`;
+}
+function personName(r){return r.authorName||r.legacyAuthor||"Без имени"}
+
+// ---------- server ----------
+async function api(action,payload={}){
+  if(!API_URL)throw new Error("Сетка еще не подключена к таблице");
+  const body=JSON.stringify(Object.assign({action},payload,S.pass?{password:S.pass}:{}));
+  let j;
+  try{
+    const r=await fetch(API_URL,{method:"POST",body});
+    j=await r.json();
+  }catch(e){throw new Error("Нет связи с таблицей. Попробуй еще раз.")}
+  if(j.state)applyState(j.state);
+  if(!j.ok)throw new Error(j.error||"Не сохранилось. Попробуй еще раз.");
+  return j;
+}
+async function load(){
+  if(!API_URL){S.ok=false;S.ready=true;renderAll();return}
+  try{
+    const r=await fetch(API_URL+"?action=list");
+    const j=await r.json();
+    if(j.state)applyState(j.state);
+  }catch(e){
+    if(!S.ready){S.ok=false;S.ready=true;renderAll()}
+  }
+}
+function applyState(st){
+  const sig=JSON.stringify(st);
+  S.ok=true;
+  if(sig===S.sig&&S.ready)return;
+  S.sig=sig;S.ready=true;
+  S.grid=new Map(Object.entries(st.grid||{}).map(([k,v])=>[k,{...v,_id:k}]));
+  S.reqs=new Map(Object.entries(st.requests||{}).map(([k,v])=>[k,{...v,_id:k}]));
+  renderAll();
+}
+
+// ---------- quarter tabs ----------
+function renderQuarters(){
+  const list=[quarterOf(TODAY)];for(let i=0;i<4;i++)list.push(nextQ(list[list.length-1]));
+  const k=qKey(S.q);
+  $("#quarters").innerHTML=list.map(o=>`<button data-act="q" data-q="${qKey(o)}" aria-pressed="${qKey(o)===k}">Q${o.q} ${o.y}</button>`).join("");
+}
+function renderRubricFilter(){
+  const sel=$("#fRubric");
+  sel.innerHTML=`<option value="">Все редакции</option>`+RUBRICS.map(r=>`<option${r===S.rubric?" selected":""}>${esc(r)}</option>`).join("");
+  $("#fFree").checked=S.onlyFree; $("#fPast").checked=S.showPast;
+}
+$("#colHead").innerHTML=`<th class="dcol">Дата</th>`+COLS.map(c=>`<th>${esc(c.name)}</th>`).join("");
+
+// ---------- board ----------
+function cellHTML(date,col){
+  const id=cellId(date,col), g=S.grid.get(id), pend=pendingFor(id);
+  const diff=dayDiff(date,TODAY);
+  const cls=["cell"]; let body="";
+  const rubricMatch=r=>!S.rubric||r===S.rubric;
+  let match=true;
+  if(!g){
+    cls.push("free");
+    if(pend.length){
+      cls.push("hasreq");
+      const r=pend[0];
+      body=`${chip(r.rubric)||'<span class="chip none">Редакция не указана</span>'}
+        <div class="meta"><span class="flag req">${pend.length>1?pend.length+" заявки":"Заявка"}</span>${r.url?`<span class="slug">${slugHTML(r.url)}</span>`:"без ссылки"}</div>`;
+      match=pend.some(p=>rubricMatch(p.rubric));
+    }else{
+      body=`<span class="lbl">+ Свободно</span>`;
+      match=!S.rubric;
+    }
+  }else{
+    if(g.state==="held")cls.push("held");
+    if(g.fixed)cls.push("fixed");
+    const noLink=!g.url;
+    if(noLink&&diff>=0&&diff<=LINK_DAYS)cls.push("warn");
+    const flags=[];
+    if(g.fixed)flags.push(`<span class="flag fix">фикс</span>`);
+    if(g.important)flags.push(`<span class="flag imp">дата важна</span>`);
+    if(noLink&&diff>=0&&diff<=LINK_DAYS)flags.push(`<span class="flag warn">нет ссылки</span>`);
+    if(pend.length)flags.push(`<span class="flag req">+${pend.length} заявк${pend.length===1?"а":"и"}</span>`);
+    body=`${chip(g.rubric)}
+      ${g.url?`<span class="slug">${slugHTML(g.url)}</span>`:`<span class="note">${esc(g.note||"Занято, ссылку принесут")}</span>`}
+      ${flags.length?`<div class="meta">${flags.join("")}</div>`:""}
+      ${g.pinned&&g.url?`<span class="pin" title="Закреплено в конфиге">${CHECK}</span>`:""}`;
+    match=rubricMatch(g.rubric)||pend.some(p=>rubricMatch(p.rubric));
+  }
+  if(!match||(S.onlyFree&&g))cls.push("dim");
+  const label=`${human(date)}, ${COLNAME[col]}: ${g?(g.url?slugOf(g.url):"занято"):(pend.length?"есть заявка":"свободно")}`;
+  return `<button class="${cls.join(" ")}" data-act="cell" data-id="${id}" aria-label="${esc(label)}">${body}</button>`;
+}
+
+function renderBoard(){
+  const [from,to]=qRange(S.q.y,S.q.q);
+  let dates=rotationDates(from,to);
+  const hidden=dates.filter(d=>d<LIVE).length;
+  if(!S.showPast)dates=dates.filter(d=>d>=LIVE);
+  const rows=[]; let month=-1;
+  if(!S.ready){$("#rows").innerHTML=`<tr><td colspan="7"><div class="empty">Загружаю сетку…</div></td></tr>`;return}
+  if(!dates.length){$("#rows").innerHTML=`<tr><td colspan="7"><div class="empty">В этом квартале не осталось дат.</div></td></tr>`;return}
+  for(const d of dates){
+    const m=parse(d).getUTCMonth();
+    if(m!==month){month=m;rows.push(`<tr class="month"><td colspan="7"><span>${MONTHS[m][0].toUpperCase()+MONTHS[m].slice(1)}</span></td></tr>`)}
+    const cls=d===LIVE?"live":(d<LIVE?"past":"");
+    const tag=d===LIVE?`<span class="tag onair" title="Сейчас на главной"><i></i>ON AIR</span>`:(d===NEXT?`<span class="tag next" title="Следующая ротация">NEXT</span>`:"");
+    rows.push(`<tr class="${cls}"><td class="dcol"><div class="date"><span class="d">${pad(parse(d).getUTCDate())}.${pad(m+1)}</span><span class="w">${wday(d)}</span>${tag}</div></td>${COLS.map(c=>`<td>${cellHTML(d,c.id)}</td>`).join("")}</tr>`);
+  }
+  $("#rows").innerHTML=rows.join("");
+  $("#fPast").parentElement.title=hidden?`Скрыто прошедших дат: ${hidden}`:"";
+}
+
+function renderSummary(){
+  const [from,to]=qRange(S.q.y,S.q.q);
+  const dates=rotationDates(from,to).filter(d=>d>=LIVE);
+  let free=0,held=0,set=0,warn=0;
+  for(const d of dates)for(const c of COLS){const g=S.grid.get(cellId(d,c.id));if(!g)free++;else if(g.url)set++;else{held++;const df=dayDiff(d,TODAY);if(df>=0&&df<=LINK_DAYS)warn++}}
+  const pending=[...S.reqs.values()].filter(r=>r.status==="new"&&r.date>=LIVE).length;
+  const st=(n,l,c="")=>`<span class="stat ${c}"><b>${n}</b><span>${l}</span></span>`;
+  $("#stats").innerHTML=`<span class="q">Впереди в Q${S.q.q} ${S.q.y}</span>`
+    +st(free,"свободно")+st(set,"с материалом")+st(held,"ждут ссылку")
+    +(warn?st(warn,plural(warn,"горит","горят","горят"),"hot"):"");
+  const n=S.isMod?pending:[...S.reqs.values()].filter(r=>isMine(r)&&r.status==="new").length;
+  $("#inboxCount").textContent=n; $("#inboxCount").classList.toggle("zero",!n);
+  $("#inboxBtn").firstChild.textContent=S.isMod?"Заявки ":"Мои заявки ";
+}
+
+function renderWho(){
+  $("#who").innerHTML=S.isMod
+    ?`<span class="role mod">Модератор</span><button class="btn ghost" data-act="logout">Выйти</button>`
+    :`<span class="role">Редактор</span><button class="btn ghost" data-act="login">Войти как модератор</button>`;
+  let b="";
+  if(!API_URL)b=`<div class="banner warn">Сетка еще не подключена к Google-таблице. Вставь адрес Apps Script в строку <code>API_URL</code> в начале скрипта.</div>`;
+  else if(S.ok===false)b=`<div class="banner warn">Не получилось загрузить сетку. Обнови страницу. Если не помогло, напиши @oefeva.</div>`;
+  $("#banner").innerHTML=b;
+}
+
+function renderAll(){renderSummary();renderBoard();renderWho();renderPanel(false)}
+
+// ---------- panel ----------
+function openPanel(o){S.open=o;$("#panel").classList.add("on");$("#scrim").classList.add("on");$("#panel").setAttribute("aria-hidden","false");renderPanel(true);setTimeout(()=>{const f=$("#panel input[type=password]")||$("#panel .x");f&&f.focus()},60)}
+function closePanel(){S.open=null;$("#panel").classList.remove("on");$("#scrim").classList.remove("on");$("#panel").setAttribute("aria-hidden","true")}
+
+function reqCard(r,{withCell=false}={}){
+  const mine=isMine(r);
+  const st={new:"на рассмотрении",accepted:"принята",rejected:"отклонена",withdrawn:"отозвана"}[r.status]||r.status;
+  const g=S.grid.get(cellId(r.date,r.col));
+  const acts=[];
+  if(S.isMod&&r.status==="new"){
+    acts.push(`<button class="btn small dark" data-act="accept" data-r="${r._id}">${g?"Принять вместо текущего":"Принять в слот"}</button>`);
+    acts.push(`<button class="btn small" data-act="reject" data-r="${r._id}">Отклонить</button>`);
+  }
+  if(S.isMod&&r.status==="accepted"&&g&&g.requestId===r._id&&r.url&&r.url!==g.url){
+    acts.push(`<button class="btn small dark" data-act="applyurl" data-r="${r._id}">Поставить новую ссылку в слот</button>`);
+  }
+  if(withCell)acts.push(`<button class="btn small ghost" data-act="cell" data-id="${cellId(r.date,r.col)}">Открыть слот →</button>`);
+  if(mine&&r.status==="new")acts.push(`<button class="btn small ghost danger" data-act="withdraw" data-r="${r._id}">Отозвать</button>`);
+  const canAddLink=mine&&(r.status==="new"||r.status==="accepted");
+  const load=rubricLoad(r.rubric,r.date).slots;
+  return `<div class="rq ${r.status}">
+    <div class="hd"><b>${esc(personName(r))}</b><span>${esc(fmtTime(r.createdAt))}</span><span class="st ${r.status}">${st}</span>${mine?`<span class="small">твоя</span>`:""}</div>
+    ${withCell?`<div class="when">${esc(human(r.date))}, ${esc(wday(r.date))} · ${esc(COLNAME[r.col])}</div>`:""}
+    <div class="row" style="display:flex;gap:6px;flex-wrap:wrap">${chip(r.rubric)||'<span class="chip none">Редакция не указана</span>'}${r.important?'<span class="flag imp">дата важна</span>':""}</div>
+    ${r.url?(isUrl(r.url)?`<a class="slug" href="${esc(r.url)}" target="_blank" rel="noopener">${esc(r.url)}</a>`:`<span class="slug">слаг: ${esc(r.url)}</span>`):`<span class="small" style="color:var(--warn)">Ссылки пока нет</span>`}
+    ${r.note?`<div class="txt">${esc(r.note)}</div>`:""}
+    ${Array.isArray(r.edits)&&r.edits.length?`<div class="hist">${r.edits.map(e=>`<div><span>${esc(fmtTime(e.at))} · ${e.from?"ссылка заменена":"ссылка добавлена"}</span>${e.from?`<s class="muted">${esc(slugOf(e.from))}</s> → `:""}${esc(slugOf(e.to))}</div>`).join("")}</div>`:""}
+    ${r.reply?`<div class="small muted">Ответ модератора: ${esc(r.reply)}</div>`:""}
+    ${canAddLink?`<div class="inl"><input type="text" id="u-${r._id}" placeholder="${r.url?"Заменить ссылку или слаг":"Добавить ссылку или слаг"}" aria-label="Ссылка"><button class="btn small" data-act="seturl" data-r="${r._id}">Сохранить</button></div>`:""}
+    ${S.isMod&&r.status==="new"&&load>=MONTH_LIMIT?`<div class="limit">У редакции уже ${load} ${plural(load,"слот","слота","слотов")} в ${monthP(r.date)}: это больше лимита. Принять можно, но лучше перенести.</div>`:""}
+    ${S.isMod&&r.status==="new"?`<div class="inl"><input type="text" id="re-${r._id}" placeholder="Комментарий к решению (необязательно)" aria-label="Комментарий"></div>`:""}
+    ${acts.length?`<div class="acts">${acts.join("")}</div>`:""}
+  </div>`;
+}
+
+function renderPanel(full){
+  if(!S.open)return;
+  // не перерисовываем панель, пока человек что-то печатает в ней
+  if(!full&&document.activeElement&&$("#panel").contains(document.activeElement)&&/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName))return;
+  if(S.open.type==="cell")return renderCellPanel(full);
+  if(S.open.type==="inbox")return renderInbox(full);
+  if(S.open.type==="rules")return renderRules(full);
+  if(S.open.type==="login")return renderLogin(full);
+}
+
+function renderCellPanel(full){
+  const id=S.open.id, [date,col]=id.split("_"), g=S.grid.get(id), all=reqsFor(id);
+  $("#pKicker").textContent=`${wday(date)} · ${COLNAME[col]}`;
+  $("#pTitle").textContent=human(date)+(date===LIVE?" · сейчас на главной":"");
+  const diff=dayDiff(date,TODAY);
+  let info="";
+  if(g){
+    const flags=[];
+    if(g.fixed)flags.push(`<span class="flag fix">фикс: не переносить</span>`);
+    if(g.important)flags.push(`<span class="flag imp">дата важна</span>`);
+    if(g.pinned)flags.push(`<span class="flag ok">✓ закреплено в конфиге</span>`);
+    if(!g.url&&diff>=0&&diff<=LINK_DAYS)flags.push(`<span class="flag warn">ротация скоро, ссылки нет</span>`);
+    info+=`<div class="sec"><h3>Сейчас в слоте</h3><div class="now ${g.state}${g.fixed?" fixed":""}">
+      <div class="row">${chip(g.rubric)||'<span class="chip none">Редакция не указана</span>'}${flags.join("")}</div>
+      ${g.url?(isUrl(g.url)?`<a class="url" href="${esc(g.url)}" target="_blank" rel="noopener">${esc(g.url)}</a>`:`<span class="url">слаг: ${esc(g.url)}</span>`):`<span class="muted">Занято, ссылку еще не принесли</span>`}
+      ${g.note?`<div>${esc(g.note)}</div>`:""}
+      ${g.authorName?`<div class="small muted">По заявке: ${esc(g.authorName)}</div>`:""}
+    </div></div>`;
+  }else{
+    info+=`<div class="sec"><div class="now"><b>Слот свободен.</b><span class="muted small">${S.isMod?"Можно поставить материал сразу или дождаться заявки.":"Подай заявку: ссылку можно добавить позже, но до дня ротации."}</span></div></div>`;
+  }
+  const open=all.filter(r=>r.status==="new"), rest=all.filter(r=>r.status!=="new");
+  if(open.length)info+=`<div class="sec"><h3>Заявки на рассмотрении · ${open.length}</h3><div class="ib">${open.map(r=>reqCard(r)).join("")}</div></div>`;
+  if(rest.length)info+=`<div class="sec"><h3>История заявок</h3><div class="ib">${rest.map(r=>reqCard(r)).join("")}</div></div>`;
+  $("#pInfo").innerHTML=info;
+  if(!full)return;
+  let f="";
+  if(S.isMod){
+    const v=g||{};
+    f+=`<form class="form sec" id="modForm" autocomplete="off"><h3>${g?"Изменить слот":"Поставить материал"}</h3>
+      <label class="f"><span>Редакция</span><select id="m-rubric"><option value="">Не указана</option>${RUBRICS.map(r=>`<option${r===v.rubric?" selected":""}>${esc(r)}</option>`).join("")}</select></label>
+      <label class="f"><span>Ссылка или слаг</span><input type="text" id="m-url" value="${esc(v.url||"")}" placeholder="https://t-j.ru/…"></label>
+      <label class="f"><span>Заметка</span><input type="text" id="m-note" value="${esc(v.note||"")}" placeholder="Все, что нам нужно знать"></label>
+      <label class="chk"><input type="checkbox" id="m-fixed"${v.fixed?" checked":""}> Фикс: закреп привязан к дате, не переносить</label>
+      <label class="chk"><input type="checkbox" id="m-pinned"${v.pinned?" checked":""}> Закреплено в конфиге clio-frontpage</label>
+      <div class="acts"><button class="btn primary" type="submit">Сохранить слот</button>${g?`<button class="btn danger" type="button" data-act="free" data-id="${id}">Освободить</button>`:""}</div>
+      <p class="hint">Без ссылки слот считается занятым и подсвечивается красным за ${LINK_DAYS} дня до ротации.</p>
+    </form>`;
+  }
+  if(!S.isMod&&diff>=0&&API_URL){
+    f+=`<form class="form sec" id="reqForm" autocomplete="off"><h3>${g?"Заявка на занятый слот":"Подать заявку"}</h3>
+      ${g?`<p class="hint">Слот уже занят. Заявка уйдет модератору, и вы договоритесь.</p>`:""}
+      <label class="f"><span>Твое имя</span><input type="text" id="r-name" value="${esc(S.name)}" placeholder="Например: Маша Кузнецова" required></label>
+      <label class="f"><span>Редакция</span><select id="r-rubric" required><option value="">Выбери редакцию</option>${RUBRICS.map(r=>`<option${r===S.rubric?" selected":""}>${esc(r)}</option>`).join("")}</select></label>
+      <label class="f"><span>Ссылка или слаг</span><input type="text" id="r-url" placeholder="https://t-j.ru/… или слаг"></label>
+      <label class="f"><span>Комментарий</span><textarea id="r-note" placeholder="Что за материал, когда выйдет"></textarea></label>
+      <label class="chk"><input type="checkbox" id="r-imp"> Дата принципиально важна</label>
+      <div id="r-limit"></div>
+      <div class="acts"><button class="btn primary" type="submit" id="r-submit">Отправить заявку</button></div>
+      <p class="hint">Материал нельзя закрепить в день выхода. Если ссылки пока нет, добавь ее в «Моих заявках» до дня ротации.</p>
+    </form>`;
+  }
+  $("#pForm").innerHTML=f;
+  checkLimit();
+}
+function checkLimit(){
+  const sel=$("#r-rubric"),box=$("#r-limit"),btn=$("#r-submit");
+  if(!sel||!box||!S.open||S.open.type!=="cell")return true;
+  const msg=limitMsg(sel.value,S.open.id.split("_")[0]);
+  box.innerHTML=msg?`<div class="limit">${esc(msg)}</div>`:"";
+  btn.disabled=!!msg;
+  return !msg;
+}
+document.addEventListener("change",e=>{if(e.target&&e.target.id==="r-rubric")checkLimit()});
+
+function renderInbox(full){
+  const all=[...S.reqs.values()];
+  $("#pKicker").textContent=S.isMod?"Модерация":"Твои заявки";
+  if(S.isMod){
+    const fresh=all.filter(r=>r.status==="new"&&r.date>=LIVE).sort((a,b)=>(a.date+a.col).localeCompare(b.date+b.col));
+    const links=all.filter(r=>{const g=S.grid.get(cellId(r.date,r.col));return r.status==="accepted"&&g&&g.requestId===r._id&&r.url&&r.url!==g.url});
+    const done=all.filter(r=>r.status!=="new").sort((a,b)=>String(b.decidedAt||b.createdAt).localeCompare(String(a.decidedAt||a.createdAt))).slice(0,40);
+    $("#pTitle").textContent=fresh.length?`${fresh.length} ${plural(fresh.length,"заявка","заявки","заявок")} ждут решения`:"Новых заявок нет";
+    const tab=S.inboxTab;
+    let h=`<div class="tabs" role="tablist">
+      <button role="tab" data-act="itab" data-t="new" aria-selected="${tab==="new"}">Новые · ${fresh.length}</button>
+      <button role="tab" data-act="itab" data-t="links" aria-selected="${tab==="links"}">Пришли ссылки · ${links.length}</button>
+      <button role="tab" data-act="itab" data-t="done" aria-selected="${tab==="done"}">Решенные</button></div>`;
+    const list=tab==="new"?fresh:tab==="links"?links:done;
+    h+=list.length?`<div class="ib">${list.map(r=>reqCard(r,{withCell:true})).join("")}</div>`:`<p class="muted">${tab==="new"?"Когда редакция подаст заявку, она появится здесь.":tab==="links"?"Здесь появятся ссылки, которые редакции донесли к уже принятым заявкам.":"Пока пусто."}</p>`;
+    $("#pInfo").innerHTML=h;
+  }else{
+    const mine=all.filter(isMine).sort((a,b)=>a.date.localeCompare(b.date));
+    $("#pTitle").textContent=mine.length?"Мои заявки":"Заявок пока нет";
+    $("#pInfo").innerHTML=mine.length?`<div class="ib">${mine.map(r=>reqCard(r,{withCell:true})).join("")}</div><p class="hint">Здесь видны заявки, поданные из этого браузера.</p>`:`<p class="muted">Нажми на свободный слот в сетке, чтобы подать заявку.</p>`;
+  }
+  if(full)$("#pForm").innerHTML="";
+}
+
+function renderRules(full){
+  $("#pKicker").textContent="Как это работает";
+  $("#pTitle").textContent="Правила закрепов";
+  $("#pInfo").innerHTML=`<div class="rules">
+    <p>Закреп — материал, зафиксированный на главной внутри конструкции two-cards-feed в конфиге clio-frontpage. Закрепляется каждый третий слот в первых трех two-cards-feed. Слоты меняются в понедельник, среду и пятницу.</p>
+    <p><b>Как занять слот.</b> Нажми на свободную ячейку, выбери редакцию и вставь ссылку или слаг, если материал еще не вышел.</p>
+    <ul>
+      <li>Если ко дню ротации в заявке нет ссылки или слага, материал не закрепят.</li>
+      <li>Материал нельзя закрепить в день выхода: он задублируется в хронологическом потоке.</li>
+      <li>К дате закрепа материал должен быть опубликован или рассекречен в Персефоне для главной.</li>
+      <li>Одна редакция может занять не больше ${MONTH_LIMIT} слотов в месяц, считая заявки на рассмотрении.</li>
+      <li>Если дата принципиально важна, поставь галочку в заявке.</li>
+      <li>В редких случаях слот могут перенести на другой день.</li>
+      <li>Ячейки в черной рамке закреплены за датой и не переносятся.</li>
+      <li>При форс-мажоре редакция Новостей может занять чужой слот по договоренности с редакцией, чей это слот.</li>
+    </ul>
+    <p>По всем вопросам закрепов пиши <b>@oefeva</b> в телеграме.</p></div>`;
+  if(full)$("#pForm").innerHTML="";
+}
+
+function renderLogin(full){
+  $("#pKicker").textContent="Модерация";
+  $("#pTitle").textContent="Вход для модератора";
+  $("#pInfo").innerHTML="";
+  if(full)$("#pForm").innerHTML=`<form class="form sec" id="loginForm" autocomplete="off">
+    <label class="f"><span>Пароль</span><input type="password" id="l-pass" autocomplete="current-password" required></label>
+    <div class="acts"><button class="btn primary" type="submit" id="l-submit">Войти</button></div>
+    <p class="hint">Пароль запомнится в этом браузере. На чужом компьютере не забудь нажать «Выйти».</p>
+  </form>`;
+}
+
+// ---------- actions ----------
+let tt=null;
+function toast(msg){const t=$("#toast");t.textContent=msg;t.classList.add("on");clearTimeout(tt);tt=setTimeout(()=>t.classList.remove("on"),2800)}
+async function run(fn,ok){
+  try{await fn();if(ok)toast(ok);return true}
+  catch(e){
+    toast(e.message||"Не сохранилось. Попробуй еще раз.");
+    if(/Неверный пароль/.test(e.message||"")&&S.isMod)logout(false);
+    return false;
+  }
+}
+const val=id=>(($("#"+id)||{}).value||"").trim();
+
+function login(pass,quiet){
+  S.pass=pass;
+  return api("login").then(()=>{
+    S.isMod=true;ls.set("zk-pass",pass);renderAll();
+    if(!quiet){closePanel();toast("Ты вошла как модератор")}
+  }).catch(e=>{
+    S.pass=null;S.isMod=false;ls.del("zk-pass");renderAll();
+    if(!quiet)toast(e.message||"Не получилось войти");
+  });
+}
+function logout(msg=true){S.pass=null;S.isMod=false;ls.del("zk-pass");if(S.open&&S.open.type!=="rules")closePanel();renderAll();if(msg)toast("Ты вышла из режима модератора")}
+
+document.addEventListener("submit",async e=>{
+  e.preventDefault();
+  const f=e.target;
+  if(f.id==="loginForm"){
+    const p=$("#l-pass").value;if(!p)return;
+    $("#l-submit").disabled=true;await login(p,false);const b=$("#l-submit");if(b)b.disabled=false;
+  }
+  if(f.id==="modForm"){
+    const id=S.open.id,[date,col]=id.split("_"),old=S.grid.get(id);
+    const rubric=$("#m-rubric").value,url=val("m-url"),note=val("m-note"),fixed=$("#m-fixed").checked,pinned=$("#m-pinned").checked;
+    if(!rubric&&!url&&!note&&!fixed){
+      if(old)await run(()=>api("free",{id}),"Слот освобожден");else toast("Заполни хотя бы редакцию или ссылку");
+      renderPanel(true);return;
+    }
+    await run(()=>api("saveCell",{doc:{date,col,rubric,url,note,fixed,pinned}}),"Слот сохранен");
+    renderPanel(true);
+  }
+  if(f.id==="reqForm"){
+    const id=S.open.id,[date,col]=id.split("_");
+    const name=val("r-name");if(!name){toast("Напиши свое имя");return}
+    const rubric=$("#r-rubric").value;if(!rubric){toast("Выбери редакцию");return}
+    if(!checkLimit()){toast(`Лимит: не больше ${MONTH_LIMIT} слотов в месяц на редакцию`);return}
+    const url=val("r-url"),note=val("r-note");
+    if(!url&&!note){toast("Добавь ссылку, слаг или пару слов о материале");return}
+    S.name=name;ls.set("zk-name",name);
+    const btn=$("#r-submit");btn.disabled=true;
+    const ok=await run(async()=>{
+      const j=await api("createRequest",{doc:{date,col,rubric,url,note,important:$("#r-imp").checked,authorName:name}});
+      S.tokens[j.id]=j.token;ls.set("zk-tokens",S.tokens);
+    },"Заявка отправлена модератору");
+    if(ok){renderAll();renderPanel(true)}else if(btn)btn.disabled=false;
+  }
+});
+
+document.addEventListener("click",e=>{
+  const el=e.target.closest("[data-act]");if(!el)return;
+  const a=el.dataset.act, rid=el.dataset.r;
+  if(a==="cell"){
+    if(el.classList.contains("cell")){
+      const id=el.dataset.id,g=S.grid.get(id),p=pendingFor(id)[0];
+      const u=(g&&g.url)||(!g&&p&&p.url)||"";
+      if(u&&navigator.clipboard)try{navigator.clipboard.writeText(slugOf(u)).catch(()=>{})}catch(err){}
+    }
+    openPanel({type:"cell",id:el.dataset.id});
+  }
+  else if(a==="close")closePanel();
+  else if(a==="theme")setTheme(isDark()?"light":"dark",true);
+  else if(a==="inbox")openPanel({type:"inbox"});
+  else if(a==="rules")openPanel({type:"rules"});
+  else if(a==="login")openPanel({type:"login"});
+  else if(a==="logout")logout();
+  else if(a==="itab"){S.inboxTab=el.dataset.t;renderPanel(true)}
+  else if(a==="q"){const [y,q]=el.dataset.q.split("-Q").map(Number);S.q={y,q};renderQuarters();renderSummary();renderBoard()}
+  else if(a==="accept")run(()=>api("accept",{rid,reply:val("re-"+rid)}),"Заявка принята, слот занят");
+  else if(a==="reject")run(()=>api("reject",{rid,reply:val("re-"+rid)}),"Заявка отклонена");
+  else if(a==="applyurl")run(()=>api("applyUrl",{rid}),"Ссылка в слоте обновлена");
+  else if(a==="seturl"){const url=val("u-"+rid);if(!url){toast("Вставь ссылку или слаг");return}run(()=>api("setReqUrl",{rid,url,token:S.tokens[rid]}),"Ссылка добавлена в заявку").then(()=>renderPanel(true))}
+  else if(a==="withdraw")run(()=>api("withdraw",{rid,token:S.tokens[rid]}),"Заявка отозвана");
+  else if(a==="free")run(()=>api("free",{id:el.dataset.id}),"Слот освобожден").then(()=>renderPanel(true));
+});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&S.open)closePanel()});
+$("#fRubric").addEventListener("change",e=>{S.rubric=e.target.value;savePrefs();renderBoard()});
+$("#fFree").addEventListener("change",e=>{S.onlyFree=e.target.checked;savePrefs();renderBoard()});
+$("#fPast").addEventListener("change",e=>{S.showPast=e.target.checked;renderBoard()});
+
+// ---------- theme ----------
+const mq=window.matchMedia?matchMedia("(prefers-color-scheme: dark)"):null;
+function isDark(){const t=document.documentElement.dataset.theme;return t?t==="dark":!!(mq&&mq.matches)}
+function paintThemeBtn(){const b=$("#themeBtn"),d=isDark();b.textContent=d?"☀":"☾";b.title=d?"Светлая тема":"Темная тема";b.setAttribute("aria-label",b.title)}
+function setTheme(t,save){document.documentElement.dataset.theme=t;if(save)ls.set("zk-theme",t);paintThemeBtn()}
+{const t=ls.get("zk-theme",null);if(t==="light"||t==="dark")setTheme(t,false)}
+if(mq&&mq.addEventListener)mq.addEventListener("change",paintThemeBtn);
+paintThemeBtn();
+
+// ---------- boot ----------
+renderQuarters();renderRubricFilter();renderSummary();renderWho();
+load();
+{const p=ls.get("zk-pass",null);if(p&&API_URL)login(p,true)}
+setInterval(()=>{if(!document.hidden&&API_URL)load()},POLL_MS);
+document.addEventListener("visibilitychange",()=>{if(!document.hidden&&API_URL)load()});
+})();
+</script>
+</body>
+</html>
